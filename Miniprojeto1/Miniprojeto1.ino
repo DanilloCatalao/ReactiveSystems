@@ -1,4 +1,8 @@
 
+// Danillo Catalao 1320966
+// Lucas Pinheiro  1611079
+
+
 /* Define shift register pins used for seven segment display */
 #define LATCH_DIO 4
 #define CLK_DIO 7
@@ -131,7 +135,7 @@ void UpdateTime()
   
   if (currentState != SETTIME)
   {
-    if (currentTime - lastTime > 350) 
+    if (currentTime - lastTime > 60000) 
     {
       //passou-se 1 minuto
       lastTime = currentTime;
