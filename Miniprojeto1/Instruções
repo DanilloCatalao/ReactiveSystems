@@ -1,0 +1,21 @@
+O relógio consiste de 3 estados:
+ -"Normal", exibe a hora/minuto.
+ -"Setar Tempo", escolha da hora/minuto.
+ -"Setar Alarme", escolha do horário para o alarme tocar.
+
+Botões:
+ -A1: 
+    -Em qualquer estado:
+      Muda o estado do relógio na ordem: "Normal"->"Setar Tempo"->"Setar Alarme"->"Normal"...
+ -A2:
+    -No estado Normal:
+      Liga/Desliga o alarme.O LED D4 fica aceso quando o alarme estiver ligado.
+    -Nos estados "Setar Tempo" e "Setar Alarme":
+      Muda o 'cursor' do dígito que será alterado(Da esquerda para a direita, cíclico).
+ -A3:
+    -No estado Normal:
+      Nada.
+    -Nos estados "Setar Tempo" e "Setar Alarme":
+      Incrementa o valor do dígito selecionado.
+
+Assim que o alarme disparar, qualquer um dos 3 botões interrompe o som do alarme.
