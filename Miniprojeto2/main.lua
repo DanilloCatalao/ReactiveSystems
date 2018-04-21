@@ -4,12 +4,50 @@ MAX_METEORS = 12
 
 plane = {
   src = "imagens/plane.png",
-  width = 64,
-  height = 64,
+  width = 55,
+  height = 63,
   x = SCREEN_WIDTH / 2 -32,
   y = SCREEN_HEIGHT - 64
     
 }
+
+function movePlane()
+  if love.keyboard.isDown("w") then
+      plane.y = plane.y - 1
+  end
+  if love.keyboard.isDown("s") then
+    plane.y = plane.y + 1
+  end  
+  if love.keyboard.isDown("a") then
+    plane.x = plane.x - 1
+  end  
+  if love.keyboard.isDown("d") then
+    plane.x = plane.x + 1
+  end 
+end
+
+function destroyPlane()
+  plane.src = "imagens/explosion_plane.png"
+  plane.image = love.graphics.newImage( plane.src )
+  plane.width = 67
+  plane.height = 77
+end  
+function hasCollision( x1, y1, l1, a1, x2, y2, l2, a2)
+  return x2 < x1 + l1 and
+         x1 < x2 + l2 and
+         y1 < y2 + a2 and
+         y2 < y1 + a1
+end
+
+function checkCollisions()
+  for k,meteor in pairs(meteors) do
+    if hasCollision( meteor.x, meteor.y, meteor.width, meteor.height,
+                     plane.x, plane.y, plane.width, plane.height ) then
+      destroyPlane() 
+      GAME_OVER = true
+    end
+  end  
+end  
 
 meteors = {}
 
@@ -27,6 +65,8 @@ function createMeteor()
   meteor = {
     x = math.random( SCREEN_WIDTH ),
     y = -70,
+    width = 50,
+    height = 44,
     weight = math.random(3),
     horizontal_movement = math.random( -1, 1 )
   }
@@ -38,21 +78,6 @@ function moveMeteors()
     meteor.y = meteor.y + meteor.weight
     meteor.x = meteor.x + meteor.horizontal_movement 
   end
-end
-
-function movePlane()
-  if love.keyboard.isDown("w") then
-      plane.y = plane.y - 1
-  end
-  if love.keyboard.isDown("s") then
-    plane.y = plane.y + 1
-  end  
-  if love.keyboard.isDown("a") then
-    plane.x = plane.x - 1
-  end  
-  if love.keyboard.isDown("d") then
-    plane.x = plane.x + 1
-  end 
 end
 
 -- Load some default values for our rectangle.
@@ -68,19 +93,21 @@ end
 
 -- Increase the size of the rectangle every frame.
 function love.update(dt)
-  if love.keyboard.isDown( "w", "a", "s", "d" ) then
-    movePlane()
-  end
-  
-  removeMeteors()
-  
-  if #meteors < MAX_METEORS then
-    createMeteor()
-  end
-  
-  moveMeteors()
+  if not GAME_OVER then
+    if love.keyboard.isDown( "w", "a", "s", "d" ) then
+      movePlane()
+    end
+    
+    removeMeteors()
+    
+    if #meteors < MAX_METEORS then
+      createMeteor()
+    end
+    
+    moveMeteors()
 
-  
+    checkCollisions()
+  end
 end
 
 -- Draw a coloured rectangle.
