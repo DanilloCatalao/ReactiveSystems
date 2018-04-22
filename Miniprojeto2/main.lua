@@ -3,7 +3,7 @@ SCREEN_HEIGHT = 480
 MAX_METEORS = 22
 METEORS_HIT = 0
 
-function newPlane()
+function newPlayer()
   local x, y = SCREEN_WIDTH / 2 - 32, SCREEN_HEIGHT - 64
   local width, height = 55, 55
   local img = plane_img
@@ -49,9 +49,9 @@ end
 function destroyPlane()
   plane_destruction_sound:play()
   plane_image = love.graphics.newImage( "imagens/explosion_plane.png" )
-  plane.changeImg( plane_image )  
-  plane.width = 67 
-  plane.height = 77
+  player.changeImg( plane_image )  
+  player.width = 67 
+  player.height = 77
 end  
 
 
@@ -177,7 +177,7 @@ end
 function checkCollisionPlaneMeteor()
   for k,meteor in pairs(meteors) do
     if hasCollision( meteor.getX(), meteor.getY(), meteor.getWidth(), meteor.getHeight(), 
-                     plane.getX(), plane.getY(), plane.getWidth(), plane.getHeight() ) then
+                     player.getX(), player.getY(), player.getWidth(), player.getHeight() ) then
       changeMusic()               
       destroyPlane() 
       GAME_OVER = true
@@ -186,16 +186,16 @@ function checkCollisionPlaneMeteor()
 end
 
 function checkCollisionShotMeteor()
-  for i = #plane.shots, 1, -1 do
+  for i = #player.shots, 1, -1 do
     for j = #meteors, 1, -1 do
-      if hasCollision( plane.shots[i].getX(), plane.shots[i].getY(),
-                      plane.shots[i].getWidth(), plane.shots[i].getHeight(),
+      if hasCollision( player.shots[i].getX(), player.shots[i].getY(),
+                      player.shots[i].getWidth(), player.shots[i].getHeight(),
                       meteors[j].getX(), meteors[j].getY(),
                       meteors[j].getWidth(), meteors[j].getHeight() ) then
         METEORS_HIT = METEORS_HIT + 1
         meteor_destruction_sound:stop()
         meteor_destruction_sound:play()
-        table.remove( plane.shots, i )
+        table.remove( player.shots, i )
         table.remove( meteors, j )
         break
       end  
@@ -236,7 +236,7 @@ function love.load()
   meteor_destruction_sound = love.audio.newSource( "audios/meteor_destruction.wav", "static" )
   shoot_sound = love.audio.newSource( "audios/shoot.wav", "static" )
   
-  plane = newPlane()
+  player = newPlayer()
   meteors = {}
 end
 
@@ -249,20 +249,20 @@ function love.update(dt)
       love.event.quit()
     end
     if love.keyboard.isDown( "w") then
-      plane.movePlane("w")
+      player.movePlane("w")
     end
     if love.keyboard.isDown( "s") then
-      plane.movePlane("s")
+      player.movePlane("s")
     end
     if love.keyboard.isDown( "a") then
-      plane.movePlane("a")
+      player.movePlane("a")
     end
     if love.keyboard.isDown( "d") then
-      plane.movePlane("d")
+      player.movePlane("d")
     end
     if love.keyboard.isDown( "space" ) then
       if shot_limit_index == 10 then
-        table.insert( plane.shots, shootAction( plane, 3 ) ) 
+        table.insert( player.shots, shootAction( player, 3 ) ) 
         shot_limit_index = 1
       else
         shot_limit_index = shot_limit_index + 1
@@ -279,7 +279,7 @@ function love.update(dt)
     end
     
     updateMeteors()
-    updateShots( plane )
+    updateShots( player )
     checkCollisions()
   end
 end
@@ -288,18 +288,17 @@ end
 function love.draw()
   love.graphics.draw( background_img, 0, 0 )
   
-  ---love.graphics.draw( plane.image, plane.x, plane.y )
-  plane.draw()
+  player.draw()
   for i = 1, #meteors do
     meteors[i].draw()
   end
-  for i = 1, #plane.shots do
-    plane.shots[i].draw()
+  for i = 1, #player.shots do
+    player.shots[i].draw()
   end  
   
   love.graphics.print( "Meteoros Atingidos "..METEORS_HIT, 0, 0 )
   
-  for _,shoot in pairs( plane.shots ) do
+  for _,shoot in pairs( player.shots ) do
     love.graphics.draw( shoot_img, shoot.x, shoot.y )
   end  
   
