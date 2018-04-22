@@ -1,11 +1,11 @@
 SCREEN_WIDTH = 320
 SCREEN_HEIGHT = 480
-MAX_METEORS = 12
+MAX_METEORS = 18
 METEORS_HIT = 0
 plane = {
   src = "imagens/plane.png",
   width = 55,
-  height = 63,
+  height = 55,
   x = SCREEN_WIDTH / 2 - 32,
   y = SCREEN_HEIGHT - 64,
   shots = {} 
@@ -13,23 +13,23 @@ plane = {
 
 function movePlane()
   if love.keyboard.isDown("w") then
-      plane.y = plane.y - 2
+      plane.y = plane.y - 3
   end
   if love.keyboard.isDown("s") then
-    plane.y = plane.y + 2
+    plane.y = plane.y + 3
   end  
   if love.keyboard.isDown("a") then
-    plane.x = plane.x - 2
+    plane.x = plane.x - 3
   end  
   if love.keyboard.isDown("d") then
-    plane.x = plane.x + 2
+    plane.x = plane.x + 3
   end 
 end
 
 function shootAction()
   shoot_sound:play()
   local shoot = {
-    x = plane.x + plane.width / 2 - 3,
+    x = plane.x + plane.width / 2 - 5,
     y = plane.y,
     width = 16,
     height = 16
@@ -40,7 +40,7 @@ end
 function moveShots()
   for i = #plane.shots,1,-1 do
     if plane.shots[i].y > 0 then
-      plane.shots[i].y = plane.shots[i].y - 2
+      plane.shots[i].y = plane.shots[i].y - 3
     else
       table.remove( plane.shots, i )
     end  
@@ -48,7 +48,7 @@ function moveShots()
 end
 
 function destroyPlane()
-  destruction_sound:play()
+  plane_destruction_sound:play()
   plane.src = "imagens/explosion_plane.png"
   plane.image = love.graphics.newImage( plane.src )
   plane.width = 67
@@ -80,6 +80,8 @@ function checkCollisionShotMeteor()
                       meteors[j].x, meteors[j].y,
                       meteors[j].width, meteors[j].height) then
         METEORS_HIT = METEORS_HIT + 1
+        meteor_destruction_sound:stop()
+        meteor_destruction_sound:play()
         table.remove( plane.shots, i )
         table.remove( meteors, j )
         break
@@ -112,11 +114,12 @@ function removeMeteors()
 end
 function createMeteor()
   meteor = {
+    img = meteor_imgs[ math.random( 4 ) ] ,
     x = math.random( SCREEN_WIDTH ),
     y = -70,
-    width = 50,
-    height = 44,
-    weight = math.random(3),
+    width = 35,
+    height = 35,
+    weight = math.random( 2, 4 ),
     horizontal_movement = math.random( -1, 1 )
   }
   table.insert( meteors, meteor )
@@ -129,13 +132,13 @@ function moveMeteors()
   end
 end
 
-function love.keypressed(key)
-  if key == "escape" then
-    love.event.quit()
-  elseif key == "space" then
-    shootAction()
-  end 
-end
+--function love.keypressed(key)
+  --if key == "escape" then
+   -- love.event.quit()
+  --elseif key == "space" then
+  --  shootAction()
+ -- end 
+--end
 -- Load some default values for our rectangle.
 function love.load()
   love.window.setMode( SCREEN_WIDTH , SCREEN_HEIGHT, {resizable = false} )
@@ -146,25 +149,45 @@ function love.load()
   plane.image = love.graphics.newImage( plane.src )
   background_img = love.graphics.newImage( "imagens/background.png" )
   game_over_img = love.graphics.newImage( "imagens/gameover.png" )
-  meteor_img = love.graphics.newImage( "imagens/meteor.png" )
+  meteor_img_1 = love.graphics.newImage( "imagens/meteor1.png" )
+  meteor_img_2 = love.graphics.newImage( "imagens/meteor2.png" )
+  meteor_img_3 = love.graphics.newImage( "imagens/meteor3.png" )
+  meteor_img_4 = love.graphics.newImage( "imagens/meteor4.png" )
+  meteor_imgs = { meteor_img_1, meteor_img_2, meteor_img_3, meteor_img_4}
   shoot_img = love.graphics.newImage( "imagens/shoot.png" )
   
   environment_music = love.audio.newSource( "audios/environment.wav", "static" )
   environment_music:setLooping(true)
   environment_music:play()
   game_over_music = love.audio.newSource( "audios/game_over.wav", "static" )
-  destruction_sound = love.audio.newSource( "audios/destruction.wav", "static" )
+  plane_destruction_sound = love.audio.newSource( "audios/plane_destruction.wav", "static" )
+  meteor_destruction_sound = love.audio.newSource( "audios/meteor_destruction.wav", "static" )
   shoot_sound = love.audio.newSource( "audios/shoot.wav", "static" )
   
 end
 
+shot_limit = {false,false,false,false,false,true}
+shot_limit_index = 0
 -- Increase the size of the rectangle every frame.
 function love.update(dt)
   if not GAME_OVER then
+    if love.keyboard.isDown( "escape" ) then
+      love.event.quit()
+    end
     if love.keyboard.isDown( "w", "a", "s", "d" ) then
       movePlane()
     end
-    
+    if love.keyboard.isDown( "space" ) then
+      if shot_limit[shot_limit_index] then
+        shootAction()
+        shot_limit_index = 1
+      else
+        shot_limit_index = shot_limit_index + 1
+        if shot_limit_index > 6 then
+          shot_limit_index = 1
+        end  
+      end  
+    end
     removeMeteors()
     
     if #meteors < MAX_METEORS then
@@ -185,7 +208,7 @@ function love.draw()
   love.graphics.print( "Meteoros Atingidos "..METEORS_HIT, 0 , 0 )
   
   for k,meteor in pairs(meteors) do
-    love.graphics.draw( meteor_img, meteor.x, meteor.y )
+    love.graphics.draw( meteor.img, meteor.x, meteor.y )
   end
   
   for _,shoot in pairs( plane.shots ) do
