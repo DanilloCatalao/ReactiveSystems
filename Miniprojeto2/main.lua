@@ -1,6 +1,6 @@
 SCREEN_WIDTH = 320
 SCREEN_HEIGHT = 480
-MAX_METEORS = 18
+MAX_METEORS = 22
 METEORS_HIT = 0
 
 function newPlane()
@@ -55,29 +55,62 @@ function destroyPlane()
 end  
 
 
-function shootAction()
+function shootAction( player, speed )
+  shoot_sound:stop()
   shoot_sound:play()
-  local shoot = {
-    x = plane.getX() + plane.getWidth() / 2 - 5,
-    y = plane.getY(),
-    width = 16,
-    height = 16
-  }
-  table.insert( plane.shots, shoot )
+  local x = player.getX() + player.getWidth() / 2 - 5
+  local y = player.getY()
+  local width, height = 16, 16
+  local isActiveAfter = 0
+  local wait = function (time)
+    isActiveAfter = now + time
+    coroutine.yield()
+  end
+  return {
+    getX = function()
+      return x
+    end,
+    getY = function()
+      return y
+    end,
+    getWidth = function()
+      return width
+    end,
+    getHeight = function()
+      return height
+    end,  
+    update = coroutine.wrap( function()
+      while(1) do
+        if y > 0 then
+          y = y - 3
+        end
+        wait( speed / 100  )
+      end
+    end),
+    
+    draw = function()
+      love.graphics.draw( shoot_img, x, y )
+    end,  
+    
+    isActive = function()
+      return now > isActiveAfter
+    end
+  }  
 end
 
-function moveShots()
-  for i = #plane.shots,1,-1 do
-    if plane.shots[i].y > 0 then
-      plane.shots[i].y = plane.shots[i].y - 3
-    else
-      table.remove( plane.shots, i )
-    end  
+function updateShots( player )
+  for i = #player.shots,1,-1 do
+    if player.shots[i].isActive() then
+      player.shots[i].update()
+    end
+    if player.shots[i].getY() < 0 then
+      table.remove( player.shots, i )
+    end 
   end  
 end
 
 function createMeteor( speed )
-  local x, y = math.random( SCREEN_WIDTH ), -70
+  local x, y = math.random( -20, SCREEN_WIDTH + 20 ), -70
   local width, height = 35, 35
   local horizontal_movement = math.random( -1, 1 )
   local img = meteor_imgs[ math.random( 4 ) ] 
@@ -103,7 +136,7 @@ function createMeteor( speed )
       while(1) do
         y = y + 2
         x = x + horizontal_movement
-        wait( speed/10000 )
+        wait( speed / 10000 )
       end
     end),    
     isActive = function()
@@ -155,8 +188,8 @@ end
 function checkCollisionShotMeteor()
   for i = #plane.shots, 1, -1 do
     for j = #meteors, 1, -1 do
-      if hasCollision( plane.shots[i].x, plane.shots[i].y,
-                      plane.shots[i].width, plane.shots[i].height,
+      if hasCollision( plane.shots[i].getX(), plane.shots[i].getY(),
+                      plane.shots[i].getWidth(), plane.shots[i].getHeight(),
                       meteors[j].getX(), meteors[j].getY(),
                       meteors[j].getWidth(), meteors[j].getHeight() ) then
         METEORS_HIT = METEORS_HIT + 1
@@ -207,8 +240,7 @@ function love.load()
   meteors = {}
 end
 
-shot_limit = {false,false,false,false,false,true}
-shot_limit_index = 0
+shot_limit_index = 10
 -- Increase the size of the rectangle every frame.
 function love.update(dt)
   now = os.clock()
@@ -229,12 +261,12 @@ function love.update(dt)
       plane.movePlane("d")
     end
     if love.keyboard.isDown( "space" ) then
-      if shot_limit[shot_limit_index] then
-        shootAction()
+      if shot_limit_index == 10 then
+        table.insert( plane.shots, shootAction( plane, 3 ) ) 
         shot_limit_index = 1
       else
         shot_limit_index = shot_limit_index + 1
-        if shot_limit_index > 6 then
+        if shot_limit_index > 10 then
           shot_limit_index = 1
         end  
       end  
@@ -247,7 +279,7 @@ function love.update(dt)
     end
     
     updateMeteors()
-    moveShots()
+    updateShots( plane )
     checkCollisions()
   end
 end
@@ -261,6 +293,9 @@ function love.draw()
   for i = 1, #meteors do
     meteors[i].draw()
   end
+  for i = 1, #plane.shots do
+    plane.shots[i].draw()
+  end  
   
   love.graphics.print( "Meteoros Atingidos "..METEORS_HIT, 0, 0 )
   
