@@ -9,6 +9,9 @@ function newPlane()
   local img = plane_img
   return{
     shots = {},
+    changeImg = function(newImg)
+     img = newImg
+    end,  
     getX = function()
       return x
     end,
@@ -43,11 +46,20 @@ function newPlane()
   }  
 end
 
+function destroyPlane()
+  plane_destruction_sound:play()
+  plane_image = love.graphics.newImage( "imagens/explosion_plane.png" )
+  plane.changeImg( plane_image )  
+  plane.width = 67 
+  plane.height = 77
+end  
+
+
 function shootAction()
   shoot_sound:play()
   local shoot = {
-    x = plane.x + plane.width / 2 - 5,
-    y = plane.y,
+    x = plane.getX() + plane.getWidth() / 2 - 5,
+    y = plane.getY(),
     width = 16,
     height = 16
   }
@@ -62,20 +74,6 @@ function moveShots()
       table.remove( plane.shots, i )
     end  
   end  
-end
-
-function destroyPlane()
-  plane_destruction_sound:play()
-  plane.src = "imagens/explosion_plane.png"
-  plane.image = love.graphics.newImage( plane.src )
-  plane.width = 67
-  plane.height = 77
-end  
-function hasCollision( x1, y1, l1, a1, x2, y2, l2, a2)
-  return x2 < x1 + l1 and
-         x1 < x2 + l2 and
-         y1 < y2 + a2 and
-         y2 < y1 + a1
 end
 
 function createMeteor( speed )
@@ -103,9 +101,9 @@ function createMeteor( speed )
     end, 
     update = coroutine.wrap( function(this) 
       while(1) do
-        y = y + 1
+        y = y + 2
         x = x + horizontal_movement
-        wait( speed/100 )
+        wait( speed/10000 )
       end
     end),    
     isActive = function()
@@ -136,6 +134,13 @@ function removeMeteors()
   end
 end
 
+function hasCollision( x1, y1, l1, a1, x2, y2, l2, a2)
+  return x2 < x1 + l1 and
+         x1 < x2 + l2 and
+         y1 < y2 + a2 and
+         y2 < y1 + a1
+end
+
 function checkCollisionPlaneMeteor()
   for k,meteor in pairs(meteors) do
     if hasCollision( meteor.getX(), meteor.getY(), meteor.getWidth(), meteor.getHeight(), 
@@ -152,8 +157,8 @@ function checkCollisionShotMeteor()
     for j = #meteors, 1, -1 do
       if hasCollision( plane.shots[i].x, plane.shots[i].y,
                       plane.shots[i].width, plane.shots[i].height,
-                      meteors[j].x, meteors[j].y,
-                      meteors[j].width, meteors[j].height) then
+                      meteors[j].getX(), meteors[j].getY(),
+                      meteors[j].getWidth(), meteors[j].getHeight() ) then
         METEORS_HIT = METEORS_HIT + 1
         meteor_destruction_sound:stop()
         meteor_destruction_sound:play()
@@ -238,12 +243,12 @@ function love.update(dt)
     removeMeteors()
     
     if #meteors < MAX_METEORS then
-      table.insert( meteors, createMeteor( math.random( 2, 4 ) ) )
+      table.insert( meteors, createMeteor( math.random( 4 ) ) )
     end
     
     updateMeteors()
-    --moveShots()
-    --checkCollisions()
+    moveShots()
+    checkCollisions()
   end
 end
 
