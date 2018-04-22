@@ -15,7 +15,7 @@ function newblip (vel)
           -- volta para a esquerda da janela
             x = 0
           end
-          wait( vel/100 , this )
+          wait( vel/5 , this )
         end  
       end),
     
@@ -48,7 +48,7 @@ function newplayer ()
     return x
   end,
   update = function (dt)
-    x = x + 0.5
+    x = x + 5
     if x > width then
       x = 0
     end
