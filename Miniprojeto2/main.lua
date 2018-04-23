@@ -6,7 +6,7 @@ shot_limit_index = 10
 
 function newPlayer()
   local x, y = SCREEN_WIDTH / 2 - 32, SCREEN_HEIGHT - 64
-  local width, height = 40, 45
+  local width, height = 40, 40
   local img = plane_img
   return{
     shots = {},
@@ -59,7 +59,7 @@ end
 function shootAction( player, speed )
   shoot_sound:stop()
   shoot_sound:play()
-  local x = player.getX() + player.getWidth() / 2 - 5
+  local x = player.getX() + player.getWidth() / 2 + 2
   local y = player.getY()
   local width, height = 16, 16
   local isActiveAfter = 0
@@ -112,7 +112,7 @@ end
 
 function createMeteor( speed )
   local x, y = math.random( -20, SCREEN_WIDTH + 20 ), -70
-  local width, height = 30, 30
+  local width, height = 30, 25
   local horizontal_movement = math.random( -1, 1 )
   local img = meteor_imgs[ math.random( 4 ) ] 
   local isActiveAfter = 0
@@ -133,7 +133,7 @@ function createMeteor( speed )
     getHeight = function()
       return height
     end, 
-    update = coroutine.wrap( function(this) 
+    update = coroutine.wrap( function() 
       while(1) do
         y = y + 2
         x = x + horizontal_movement
@@ -196,6 +196,7 @@ function checkCollisionShotMeteor()
         METEORS_HIT = METEORS_HIT + 1
         meteor_destruction_sound:stop()
         meteor_destruction_sound:play()
+        createMeteorExplosionRoutine( meteors[j].getX()-35, meteors[j].getY() )
         table.remove( player.shots, i )
         table.remove( meteors, j )
         break
@@ -267,6 +268,7 @@ function love.draw()
   for i = 1, #player.shots do
     player.shots[i].draw()
   end
+  drawMeteorExplosions()
   love.graphics.print( "Meteoros Atingidos "..METEORS_HIT, 0, 0 )
   
   if GAME_OVER then
@@ -288,6 +290,30 @@ function printBackground()
     end
 end
 
+function createMeteorExplosionRoutine( x , y )
+  co = coroutine.create(function ( x, y )
+    local j = 1
+    for i = 1, 3*#meteor_explosion_imgs do
+      love.graphics.draw( meteor_explosion_imgs[j], x, y+i*3 )
+      if i % 3 == 1 then
+        j = j + 1
+      end
+      coroutine.yield()
+    end
+  end)
+  table.insert( meteorExplosions, {co,x,y} )
+end
+
+
+function drawMeteorExplosions()
+  for i = #meteorExplosions, 1, -1 do
+    coroutine.resume( meteorExplosions[i][1] , meteorExplosions[i][2], meteorExplosions[i][3] )
+    if coroutine.status( meteorExplosions[i][1] ) == "dead" then
+      table.remove( meteorExplosions, i )
+    end
+  end
+end
+       
 -- Load some default values for our rectangle.
 function love.load() 
   love.window.setMode( SCREEN_WIDTH , SCREEN_HEIGHT, {resizable = false} )
@@ -334,8 +360,8 @@ function love.load()
   } 
   shoot_img = love.graphics.newImage( "imagens/shoot.png" )
   
-  
   player = newPlayer()
   meteors = {}
+  meteorExplosions = {}
   backgroundPosY = 0
 end
