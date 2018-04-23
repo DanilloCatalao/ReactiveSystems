@@ -6,7 +6,7 @@ shot_limit_index = 10
 
 function newPlayer()
   local x, y = SCREEN_WIDTH / 2 - 32, SCREEN_HEIGHT - 64
-  local width, height = 55, 55
+  local width, height = 40, 45
   local img = plane_img
   return{
     shots = {},
@@ -112,7 +112,7 @@ end
 
 function createMeteor( speed )
   local x, y = math.random( -20, SCREEN_WIDTH + 20 ), -70
-  local width, height = 35, 35
+  local width, height = 30, 30
   local horizontal_movement = math.random( -1, 1 )
   local img = meteor_imgs[ math.random( 4 ) ] 
   local isActiveAfter = 0
@@ -259,7 +259,6 @@ end
 
 -- Draw a coloured rectangle.
 function love.draw()
-  
   printBackground()
   player.draw()
   for i = 1, #meteors do
@@ -268,7 +267,6 @@ function love.draw()
   for i = 1, #player.shots do
     player.shots[i].draw()
   end
-  
   love.graphics.print( "Meteoros Atingidos "..METEORS_HIT, 0, 0 )
   
   if GAME_OVER then
