@@ -2,6 +2,7 @@ SCREEN_WIDTH = 320
 SCREEN_HEIGHT = 480
 MAX_METEORS = 22
 METEORS_HIT = 0
+shot_limit_index = 10
 
 function newPlayer()
   local x, y = SCREEN_WIDTH / 2 - 32, SCREEN_HEIGHT - 64
@@ -213,34 +214,6 @@ function changeMusic()
   --game_over_music:play()
 end  
 
--- Load some default values for our rectangle.
-function love.load()
-  love.window.setMode( SCREEN_WIDTH , SCREEN_HEIGHT, {resizable = false} )
-  love.window.setTitle( "Miniprojeto Love" )
-  math.randomseed( os.time() )
-  
-  plane_img = love.graphics.newImage( "imagens/plane.png" )
-  background_img = love.graphics.newImage( "imagens/background.png" )
-  game_over_img = love.graphics.newImage( "imagens/gameover.png" )
-  meteor_img_1 = love.graphics.newImage( "imagens/meteor1.png" )
-  meteor_img_2 = love.graphics.newImage( "imagens/meteor2.png" )
-  meteor_img_3 = love.graphics.newImage( "imagens/meteor3.png" )
-  meteor_img_4 = love.graphics.newImage( "imagens/meteor4.png" )
-  meteor_imgs = { meteor_img_1, meteor_img_2, meteor_img_3, meteor_img_4}
-  shoot_img = love.graphics.newImage( "imagens/shoot.png" )
-  environment_music = love.audio.newSource( "audios/environment.wav", "static" )
-  environment_music:setLooping(true)
-  environment_music:play()
-  game_over_music = love.audio.newSource( "audios/game_over.wav", "static" )
-  plane_destruction_sound = love.audio.newSource( "audios/plane_destruction.wav", "static" )
-  meteor_destruction_sound = love.audio.newSource( "audios/meteor_destruction.wav", "static" )
-  shoot_sound = love.audio.newSource( "audios/shoot.wav", "static" )
-  
-  player = newPlayer()
-  meteors = {}
-end
-
-shot_limit_index = 10
 -- Increase the size of the rectangle every frame.
 function love.update(dt)
   now = os.clock()
@@ -269,7 +242,7 @@ function love.update(dt)
         if shot_limit_index > 10 then
           shot_limit_index = 1
         end  
-      end  
+      end 
     end
     
     removeMeteors()
@@ -286,23 +259,85 @@ end
 
 -- Draw a coloured rectangle.
 function love.draw()
-  love.graphics.draw( background_img, 0, 0 )
   
+  printBackground()
   player.draw()
   for i = 1, #meteors do
     meteors[i].draw()
   end
   for i = 1, #player.shots do
     player.shots[i].draw()
-  end  
+  end
   
   love.graphics.print( "Meteoros Atingidos "..METEORS_HIT, 0, 0 )
   
-  for _,shoot in pairs( player.shots ) do
-    love.graphics.draw( shoot_img, shoot.x, shoot.y )
-  end  
-  
   if GAME_OVER then
-    love.graphics.draw( game_over_img, SCREEN_WIDTH / 2 - game_over_img:getWidth()/2 , SCREEN_HEIGHT / 2 - game_over_img:getHeight()/2 )
+    love.graphics.draw( game_over_img, SCREEN_WIDTH / 2 - game_over_img:getWidth() / 2, 
+                        SCREEN_HEIGHT / 2 - game_over_img:getHeight() / 2 )
   end  
+end
+
+function printBackground()
+    love.graphics.draw( background_img, 0, backgroundPosY ) 
+    love.graphics.draw( background_img, 0, backgroundPosY - 480 ) 
+    
+    if not GAME_OVER then
+      backgroundPosY = backgroundPosY + 1 
+    end
+    
+    if backgroundPosY >= 480 then
+      backgroundPosY = 0 
+    end
+end
+
+-- Load some default values for our rectangle.
+function love.load() 
+  love.window.setMode( SCREEN_WIDTH , SCREEN_HEIGHT, {resizable = false} )
+  love.window.setTitle( "Miniprojeto Love" )
+  math.randomseed( os.time() )
+  
+  environment_music = love.audio.newSource( "audios/environment.wav", "static" )
+  environment_music:setLooping(true)
+  environment_music:play()
+  game_over_music = love.audio.newSource( "audios/game_over.wav", "static" )
+  plane_destruction_sound = love.audio.newSource( "audios/plane_destruction.wav", "static" )
+  meteor_destruction_sound = love.audio.newSource( "audios/meteor_destruction.wav", "static" )
+  shoot_sound = love.audio.newSource( "audios/shoot.wav", "static" )
+  
+  plane_img = love.graphics.newImage( "imagens/plane.png" )
+  background_img = love.graphics.newImage( "imagens/background.png" )
+  background_img2 = love.graphics.newImage( "imagens/background.png" )
+  game_over_img = love.graphics.newImage( "imagens/gameover.png" )
+  
+  meteor_imgs = {
+    love.graphics.newImage( "imagens/meteor1.png" ),
+    love.graphics.newImage( "imagens/meteor2.png" ), 
+    love.graphics.newImage( "imagens/meteor3.png" ),
+    love.graphics.newImage( "imagens/meteor4.png" )
+  }
+  meteor_explosion_imgs = {
+    love.graphics.newImage( "imagens/RedExplosion/1_0.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_1.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_2.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_3.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_4.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_5.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_6.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_7.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_8.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_9.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_10.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_11.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_12.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_13.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_14.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_15.png" ),
+    love.graphics.newImage( "imagens/RedExplosion/1_16.png" )
+  } 
+  shoot_img = love.graphics.newImage( "imagens/shoot.png" )
+  
+  
+  player = newPlayer()
+  meteors = {}
+  backgroundPosY = 0
 end
