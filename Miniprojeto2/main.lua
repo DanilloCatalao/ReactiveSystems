@@ -234,7 +234,7 @@ function love.update(dt)
     if love.keyboard.isDown( "d") then
       player.movePlane("d")
     end
-    if love.keyboard.isDown( "space" ) then
+    if love.keyboard.isDown( "k" ) then
       if shot_limit_index == 10 then
         table.insert( player.shots, shootAction( player, 3 ) ) 
         shot_limit_index = 1
