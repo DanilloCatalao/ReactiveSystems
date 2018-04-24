@@ -85,7 +85,7 @@ function shootAction( player, speed )
         if y > 0 then
           y = y - 3
         end
-        wait( speed / 100  )
+        wait( speed / 10000  )
       end
     end),
     
@@ -137,7 +137,7 @@ function createMeteor( speed )
       while(1) do
         y = y + 2
         x = x + horizontal_movement
-        wait( speed / 10000 )
+        wait( speed / 1000000 )
       end
     end),    
     isActive = function()
@@ -215,6 +215,43 @@ function changeMusic()
   --game_over_music:play()
 end  
 
+function printBackground()
+    love.graphics.draw( background_img, 0, backgroundPosY ) 
+    love.graphics.draw( background_img, 0, backgroundPosY - 480 ) 
+    
+    if not GAME_OVER then
+      backgroundPosY = backgroundPosY + 1 
+    end
+    
+    if backgroundPosY >= 480 then
+      backgroundPosY = 0 
+    end
+end
+
+function createMeteorExplosionRoutine( x , y )
+  co = coroutine.create(function ( x, y )
+    local j = 1
+    for i = 1, 3*#meteor_explosion_imgs do
+      love.graphics.draw( meteor_explosion_imgs[j], x, y+i*3 )
+      if i % 3 == 1 then
+        j = j + 1
+      end
+      coroutine.yield()
+    end
+  end)
+  table.insert( meteorExplosions, {co,x,y} )
+end
+
+
+function drawMeteorExplosions()
+  for i = #meteorExplosions, 1, -1 do
+    coroutine.resume( meteorExplosions[i][1] , meteorExplosions[i][2], meteorExplosions[i][3] )
+    if coroutine.status( meteorExplosions[i][1] ) == "dead" then
+      table.remove( meteorExplosions, i )
+    end 
+  end
+end
+       
 -- Increase the size of the rectangle every frame.
 function love.update(dt)
   now = os.clock()
@@ -249,7 +286,7 @@ function love.update(dt)
     removeMeteors()
     
     if #meteors < MAX_METEORS then
-      table.insert( meteors, createMeteor( math.random( 4 ) ) )
+      table.insert( meteors, createMeteor( math.random( 4,8 ) ) )
     end
     
     updateMeteors()
@@ -275,45 +312,8 @@ function love.draw()
     love.graphics.draw( game_over_img, SCREEN_WIDTH / 2 - game_over_img:getWidth() / 2, 
                         SCREEN_HEIGHT / 2 - game_over_img:getHeight() / 2 )
   end  
-end
-
-function printBackground()
-    love.graphics.draw( background_img, 0, backgroundPosY ) 
-    love.graphics.draw( background_img, 0, backgroundPosY - 480 ) 
-    
-    if not GAME_OVER then
-      backgroundPosY = backgroundPosY + 1 
-    end
-    
-    if backgroundPosY >= 480 then
-      backgroundPosY = 0 
-    end
-end
-
-function createMeteorExplosionRoutine( x , y )
-  co = coroutine.create(function ( x, y )
-    local j = 1
-    for i = 1, 3*#meteor_explosion_imgs do
-      love.graphics.draw( meteor_explosion_imgs[j], x, y+i*3 )
-      if i % 3 == 1 then
-        j = j + 1
-      end
-      coroutine.yield()
-    end
-  end)
-  table.insert( meteorExplosions, {co,x,y} )
-end
-
-
-function drawMeteorExplosions()
-  for i = #meteorExplosions, 1, -1 do
-    coroutine.resume( meteorExplosions[i][1] , meteorExplosions[i][2], meteorExplosions[i][3] )
-    if coroutine.status( meteorExplosions[i][1] ) == "dead" then
-      table.remove( meteorExplosions, i )
-    end
-  end
-end
-       
+end 
+ 
 -- Load some default values for our rectangle.
 function love.load() 
   love.window.setMode( SCREEN_WIDTH , SCREEN_HEIGHT, {resizable = false} )
