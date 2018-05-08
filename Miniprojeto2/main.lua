@@ -292,6 +292,7 @@ function love.update(dt)
     updateMeteors()
     updateShots( player )
     checkCollisions()
+    
   end
 end
 
