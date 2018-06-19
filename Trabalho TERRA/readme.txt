@@ -1,0 +1,2 @@
+Feito apenas a mensagem "Estou aqui", alterar a voltagem de um terminal envia mensagem de broadcast informando a distancia até aquele nó, e o próximo nó até aquele terminal.
+Essa mensagem é propagada pelos terminais, e só é repassada se for encontrado um caminho menor.

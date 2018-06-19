@@ -1,0 +1,50 @@
+#include "/home/terra/TerraNG/terra/TerraNet.defs"
+#define EVENTO_LED0 0
+#define EVENTO_LED1 1
+#define EVENTO_LED2 2
+
+var ushort nodeId = getNodeId();
+var short vValue;
+var short distanciaFonte = 2000;
+var short proxNode;
+var ubyte stat;
+
+pktype usrMsg from radioMsg with
+    var short distanciaFonte;
+    var short proxNode;
+end
+
+var usrMsg msgRadio;
+msgRadio.source = nodeId;
+msgRadio.target = BROADCAST;
+
+emit LEDS(ON);
+loop do
+    par/and do
+        emit REQ_VOLTS();
+        vValue = await VOLTS;
+        if vValue >1010 or vValue < 990 then
+            // broadcast
+            msgRadio.distanciaFonte = 0;
+            msgRadio.proxNode = nodeId;           
+            emit SEND(msgRadio);
+            await SEND_DONE;
+        else
+            par/or do
+                msgRadio = await RECEIVE;
+                if msgRadio.distanciaFonte < distanciaFonte then
+                    distanciaFonte = msgRadio.distanciaFonte + 1;
+                    proxNode = msgRadio.proxNode;
+                    msgRadio.source = nodeId;           
+                    msgRadio.distanciaFonte = distanciaFonte;
+                    emit SEND(msgRadio);
+                    await SEND_DONE;
+                end            
+            with
+                await 4s;
+            end       
+        end
+    with
+        await 1s;
+    end
+end
