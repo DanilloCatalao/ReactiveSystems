@@ -22,7 +22,6 @@ function mqttcallback(topic, message)
         local power = 110
         applyForceToBall(throwVector.x*power,throwVector.y*power)
         objects.ball.motion = true
-        currentPlayer = 2
         Timer.after(5,function() turnRoutine() end)
         waitingPlayer = false
       end
@@ -220,7 +219,9 @@ function love.update(dt)
   end
 
   if objects.ball.motion == false then
-    updateThrowVector()
+    if not waitingPlayer then
+      updateThrowVector()
+    end
   else
     updateScore()
   end
