@@ -7,11 +7,11 @@ wificonf = {
   ssid = "cpti",
   pwd = "3domingos",
   got_ip_cb = function (iptable) print ("ip: ".. iptable.IP) end,
-  save = false 
+  save = false
 }
 
 wifi.setmode(wifi.STATION)
-wifi.sta.config(wificonf) 
+wifi.sta.config(wificonf)
 
 net.dns.setdnsserver("8.8.8.8", 1)
 net.dns.resolve("www.google.com", function(sk, ip)
@@ -33,19 +33,17 @@ end
 function conectado (client)
   client:subscribe("throw", 0, novaInscricao)
   --publica(client)
-  
+
 end
 function throw()
-    return function() 
-        m:publish("throw","1",0,0,
-        function(m) print("mandou!") end)
+    return function()
+        m:publish("throw","2")
     end
 end
 
 function turn()
     return function()
-        m:publish("turn","1",0,0,
-        function(m) print("mandou!") end)
+        m:publish("turn","2")
     end
 end
 
