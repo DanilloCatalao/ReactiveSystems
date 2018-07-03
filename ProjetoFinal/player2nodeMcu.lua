@@ -4,14 +4,14 @@ gpio.mode(sw1,gpio.INT,gpio.PULLUP)
 gpio.mode(sw2,gpio.INT,gpio.PULLUP)
 
 wificonf = {
-  ssid = "Pity 2.4",
-  pwd = "22783390",
+  ssid = "cpti",
+  pwd = "3domingos",
   got_ip_cb = function (iptable) print ("ip: ".. iptable.IP) end,
-  save = false 
+  save = false
 }
 
 wifi.setmode(wifi.STATION)
-wifi.sta.config(wificonf) 
+wifi.sta.config(wificonf)
 
 net.dns.setdnsserver("8.8.8.8", 1)
 net.dns.resolve("www.google.com", function(sk, ip)
@@ -31,20 +31,27 @@ function novaInscricao (c)
 end
 
 function conectado (client)
-  client:subscribe("zoom", 0, novaInscricao)
+  client:subscribe("throw", 0, novaInscricao)
   --publica(client)
-  
+
 end
-function publish()
-    return function() 
-        m:publish("zoom","msg de " .. meuid,0,0,
-        function(client) print("mandou!") end)
+function throw()
+    return function()
+        m:publish("throw","2",0,0,
+        function(m) print("mandou!") end)
+    end
+end
+
+function turn()
+    return function()
+        m:publish("turn","2",0,0,
+        function(m) print("mandou!") end)
     end
 end
 
 
-gpio.trig(sw1, "down", publish() )
-gpio.trig(sw2, "down", publish() )
+gpio.trig(sw1, "down", throw() )
+gpio.trig(sw2, "down", turn() )
 
 
 m:connect("test.mosquitto.org", 1883, 0,

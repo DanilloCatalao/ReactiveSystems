@@ -3,13 +3,41 @@ p = love.physics
 g = love.graphics
 k = love.keyboard
 Camera = require "camera"
+Timer = require "timer"
+vector = require "vector"
 mqtt = require("mqtt_library")
 camera = Camera.new(297,108,1,0)
 camera:zoom(0.56)
 playerOnePoints = 0
 playerTwoPoints = 0
+currentPlayer = 1
+pointsLock = false
+waitingPlayer = true
+
+
 function mqttcallback(topic, message)
-   applyForceToBall(-47,-88)
+  if topic == "throw" then
+    if not waitingPlayer and not objects.ball.motion then
+      if currentPlayer == tonumber(message) then
+        local power = 110
+        applyForceToBall(throwVector.x*power,throwVector.y*power)
+        objects.ball.motion = true
+        currentPlayer = 2
+        Timer.after(5,function() turnRoutine() end)
+        waitingPlayer = false
+      end
+    end
+  else --turn
+    if message == "1" then
+      if currentPlayer == 1 then
+        waitingPlayer = false
+      end
+    else --2
+      if currentPlayer == 2 then
+        waitingPlayer = false
+      end
+    end
+  end
 end
 
 function createObjects()
@@ -19,6 +47,7 @@ function createObjects()
   objects.ground.fixture = p.newFixture(objects.ground.body, objects.ground.shape)
 
   objects.ball = {}
+  objects.ball.motion = false
   objects.ball.body = p.newBody(world, 700, 355, "dynamic")
   objects.ball.shape = p.newCircleShape(20)
   objects.ball.fixture = p.newFixture(objects.ball.body, objects.ball.shape, 1)
@@ -131,18 +160,25 @@ function love.load()
 
   mqtt_client = mqtt.client.create("test.mosquitto.org", 1883, mqttcallback)
   mqtt_client:connect("1320966")
-  mqtt_client:subscribe({"zoom"})
+  mqtt_client:subscribe({"throw","turn"})
 
-  ballImg = g.newImage("ball.png")
+  Timer.new()
+
 
   p.setMeter(100)
   world = p.newWorld(0, 9.81*63, true)
   objects = {}
 
   createObjects()
+  ballImg = g.newImage("ball.png")
+
+  throwVector = vector.fromPolar(math.pi,1)
 
   g.setBackgroundColor(0.41, 0.53, 0.97) --set the background color to a nice blue
   love.window.setMode(700, 600)
+
+  font = love.graphics.newFont("joystix monospace.ttf", 12)
+  g.setFont(font)
 
 end
 
@@ -161,7 +197,8 @@ function love.update(dt)
   elseif k.isDown("down") then
     objects.ball.body:applyForce(0, 400)
   elseif k.isDown("z") then
-    camera:zoom(1.2)
+    --camera:zoom(1.2)
+    waitingPlayer = false
   elseif k.isDown("o") then
     camera:zoom(0.8)
   elseif k.isDown("w") then
@@ -178,17 +215,64 @@ function love.update(dt)
     camera:rotate(0.2)
   elseif k.isDown("r") then
     objects.ball.body:setLinearVelocity(0, 0)
+    objects.ball.body:setAngularVelocity(0)
     objects.ball.body:setPosition(700, 355)
   end
 
+  if objects.ball.motion == false then
+    updateThrowVector()
+  else
+    updateScore()
+  end
+  Timer.update(dt)
+
+
+
 end
+
+function updateThrowVector()
+  throwVector:rotateInplace(0.03)
+end
+
+function updateScore()
+  local bx,by,hx1,hx2,hy =  objects.ball.body:getX(),objects.ball.body:getY(),objects.hoop1.body:getX(),objects.hoop2.body:getX(),objects.hoop1.body:getY()
+  if  bx >=  hx1 and bx <= hx2  and
+      by >= hy and by <= hy+7 and pointsLock == false then
+      if(currentPlayer == 1) then playerOnePoints = playerOnePoints+1
+      else
+        playerTwoPoints = playerTwoPoints+1
+      end
+      pointsLock = true
+  end
+end
+
+function  turnRoutine()
+  objects.ball.body:setLinearVelocity(0, 0)
+  objects.ball.body:setAngularVelocity(0)
+  objects.ball.body:setPosition(700, 355)
+  objects.ball.motion = false
+  throwVector = vector.fromPolar(math.pi,1)
+  pointsLock = false
+  waitingPlayer = true
+  if currentPlayer == 1 then
+    currentPlayer = 2
+  else
+    currentPlayer = 1
+  end
+end
+
 
 function applyForceToBall(x,y)
   objects.ball.body:applyLinearImpulse(x,y,objects.ball.body:getX(),objects.ball.body:getY()-1)
 end
+
 function love.keypressed(key)
    if key == "f" then
-      applyForceToBall(-47,-88)
+      --applyForceToBall(-47,-88)
+      local power = 110
+      applyForceToBall(throwVector.x*power,throwVector.y*power)
+      objects.ball.motion = true
+      Timer.after(5,function() turnRoutine() end)
    end
 end
 
@@ -235,7 +319,6 @@ end
 function love.draw()
   camera:attach()
 
-
   g.setColor(0,0,0)
   drawHoop()
   for _, body in pairs(world:getBodies()) do
@@ -253,16 +336,26 @@ function love.draw()
       end
     end
   end
-  --local k,l = camera:position()
-  --g.print(k.."-"..l,111,0)
+
   g.setColor(1, 0, 0, 100)
   local cx, cy = objects.ball.body:getWorldPoints(objects.ball.shape:getPoint())
   g.draw(ballImg,cx,cy,objects.ball.body:getAngle(),0.07,0.07,ballImg:getWidth()/2,ballImg:getHeight()/2)
 
   g.setColor(255, 255, 255, 100)
-  g.print("Player 1: "..playerOnePoints,-320,-420,0,3.0,3.0)
-  g.print("Player 2: "..playerTwoPoints,715,-420,0,3.0,3.0)
+  g.print("Player 1: "..playerOnePoints,-300,-420,0,3.0,3.0)
+  g.print("Player 2: "..playerTwoPoints,555,-420,0,3.0,3.0)
 
+  if not objects.ball.motion then
+    g.line(cx,cy,cx+throwVector.x*40,cy+throwVector.y*40)
+  end
+
+  if not objects.ball.motion and waitingPlayer then
+    drawPlayerWaitingScreen(currentPlayer)
+  end
 
   camera:detach()
+end
+
+function drawPlayerWaitingScreen(player)
+  g.print("Jogador ".. player.."\nPressione o botão 2\npara continuar",0,150,0,3,3)
 end
